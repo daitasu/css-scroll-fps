@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>004 3D 回転キューブ — CSS 3D Transform</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --line: #232838;
+        --text: #e7ebf3;
+        --muted: #97a0b5;
+        --accent: #7c8cff;
+        --accent2: #5ce1c4;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(1100px 700px at 50% 0%, rgba(124, 140, 255, 0.18), transparent 60%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, -apple-system, sans-serif;
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        display: grid;
+        place-content: center;
+        gap: 8vh;
+        padding: 12vh 24px;
+      }
+      .back {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 10;
+        text-decoration: none;
+        color: var(--text);
+        background: rgba(20, 24, 35, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .back:hover {
+        border-color: var(--accent);
+      }
+
+      .head {
+        text-align: center;
+      }
+      .head .num {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        font-size: 14px;
+      }
+      .head h1 {
+        font-size: clamp(28px, 6vw, 48px);
+        margin: 8px 0 10px;
+        letter-spacing: -0.02em;
+      }
+      .head p {
+        color: var(--muted);
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      .head code {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 13px;
+        color: var(--accent2);
+        background: rgba(92, 225, 196, 0.08);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+
+      /* ===========================================================
+         3D 回転キューブ（スクロール非依存・無限ループ）
+         - .scene に perspective を与えてカメラの遠近感を作る
+         - .cube は preserve-3d で子要素を 3D 空間に配置
+         - 6 枚の .face を rotate→translateZ で立方体に組む
+         - @keyframes で rotateX/Y を回し続けるだけ
+         =========================================================== */
+      .scene {
+        --size: 200px;
+        width: var(--size);
+        height: var(--size);
+        margin: 0 auto;
+        perspective: 900px;
+      }
+      .cube {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        animation: tumble 14s linear infinite;
+      }
+      @keyframes tumble {
+        from {
+          transform: rotateX(0deg) rotateY(0deg);
+        }
+        to {
+          transform: rotateX(360deg) rotateY(360deg);
+        }
+      }
+
+      .face {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        font: 700 40px/1 ui-monospace, "SF Mono", Menlo, monospace;
+        color: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        border-radius: 10px;
+        box-shadow:
+          inset 0 0 40px rgba(255, 255, 255, 0.12),
+          0 0 24px rgba(124, 140, 255, 0.25);
+        backface-visibility: visible;
+      }
+      /* 6 面をそれぞれ別の色に。half = size / 2 だけ前に押し出す */
+      .front {
+        transform: translateZ(100px);
+        background: rgba(124, 140, 255, 0.35);
+      }
+      .back {
+        transform: rotateY(180deg) translateZ(100px);
+        background: rgba(92, 225, 196, 0.35);
+      }
+      .right {
+        transform: rotateY(90deg) translateZ(100px);
+        background: rgba(196, 124, 255, 0.35);
+      }
+      .left {
+        transform: rotateY(-90deg) translateZ(100px);
+        background: rgba(255, 124, 196, 0.35);
+      }
+      .top {
+        transform: rotateX(90deg) translateZ(100px);
+        background: rgba(124, 196, 255, 0.35);
+      }
+      .bottom {
+        transform: rotateX(-90deg) translateZ(100px);
+        background: rgba(255, 196, 124, 0.35);
+      }
+
+      /* おまけ：床に落ちる柔らか影（雰囲気づくり） */
+      .shadow {
+        width: 200px;
+        height: 40px;
+        margin: 30px auto 0;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(124, 140, 255, 0.5), transparent);
+        filter: blur(6px);
+        animation: shadow-pulse 14s ease-in-out infinite;
+      }
+      @keyframes shadow-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(0.8); opacity: 0.3; }
+      }
+
+      .note {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cube { animation-duration: 40s; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../">← 一覧へ</a>
+
+    <div class="head">
+      <div class="num">004</div>
+      <h1>3D 回転キューブ</h1>
+      <p>
+        <code>perspective</code> ＋ <code>transform-style: preserve-3d</code> ＋ 6 枚の面を
+        <code>rotate / translateZ</code> で組んだ立方体を、<code>@keyframes</code> でひたすら回す。
+        スクロール連動なしの純 CSS 3D や。
+      </p>
+    </div>
+
+    <div>
+      <div class="scene">
+        <div class="cube">
+          <div class="face front">F</div>
+          <div class="face back">B</div>
+          <div class="face right">R</div>
+          <div class="face left">L</div>
+          <div class="face top">U</div>
+          <div class="face bottom">D</div>
+        </div>
+      </div>
+      <div class="shadow"></div>
+    </div>
+
+    <p class="note">6 面それぞれ別色。<code>backface-visibility</code> を visible にして中身も透けて見えるようにしてるで。</p>
+  </body>
+</html>

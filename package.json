@@ -1,0 +1,19 @@
+{
+  "name": "css-scroll-fps",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CSS Scroll-Driven Animations の実験場（JS なし・CSS のみ）",
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>003 画像にいろんなアニメ — CSS Scroll-Driven Animations</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --bg-soft: #141823;
+        --line: #232838;
+        --text: #e7ebf3;
+        --muted: #97a0b5;
+        --accent: #7c8cff;
+        --accent2: #5ce1c4;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1100px 700px at 80% -5%, rgba(196, 124, 255, 0.14), transparent 60%),
+          radial-gradient(900px 600px at -10% 30%, rgba(92, 225, 196, 0.1), transparent 55%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, -apple-system, sans-serif;
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      .back {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 30;
+        text-decoration: none;
+        color: var(--text);
+        background: rgba(20, 24, 35, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .back:hover {
+        border-color: var(--accent);
+      }
+
+      /* 各デモ区画 */
+      .stage {
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        text-align: center;
+        padding: 10vh 24px;
+        gap: 26px;
+      }
+      .label {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 13px;
+        color: var(--accent2);
+        background: rgba(92, 225, 196, 0.08);
+        border: 1px solid rgba(92, 225, 196, 0.22);
+        padding: 5px 12px;
+        border-radius: 8px;
+      }
+      .stage h2 {
+        margin: 0;
+        font-size: clamp(24px, 5vw, 40px);
+        letter-spacing: -0.02em;
+      }
+      .stage p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 460px;
+      }
+
+      /* 共通：アバター画像のベース */
+      .avatar {
+        width: min(46vw, 280px);
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 50%;
+        display: block;
+        box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
+        background: var(--bg-soft);
+      }
+
+      /* ヒーロー：軽く浮遊（スクロール非依存のループ） */
+      .hero .avatar {
+        animation: float 4s ease-in-out infinite;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-14px); }
+      }
+      .hero .num {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        font-size: 14px;
+      }
+      .hero h1 {
+        font-size: clamp(30px, 6vw, 52px);
+        margin: 6px 0 0;
+        letter-spacing: -0.02em;
+      }
+      .scroll-hint {
+        color: var(--muted);
+        font-size: 13px;
+        animation: bob 1.6s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(8px); }
+      }
+
+      /* ===========================================================
+         A. くるっと回転（view() を使い、区画を横切る進捗で回す）
+         =========================================================== */
+      .spin .avatar {
+        animation: spin linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 100%;
+      }
+      @keyframes spin {
+        from { transform: rotate(0) scale(0.8); }
+        to { transform: rotate(360deg) scale(1); }
+      }
+
+      /* ===========================================================
+         B. ぐぐっと拡大（中央 cover 50% でピーク → また縮む）
+         =========================================================== */
+      .pop .avatar {
+        animation: pop linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 100%;
+      }
+      @keyframes pop {
+        0% { transform: scale(0.4); opacity: 0.2; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(0.6); opacity: 0.3; }
+      }
+
+      /* ===========================================================
+         C. 形のモーフ＋色（丸 ⇄ 角丸スクエア、グレースケール解除）
+         =========================================================== */
+      .morph .avatar {
+        animation: morph linear both;
+        animation-timeline: view();
+        animation-range: entry 10% cover 60%;
+      }
+      @keyframes morph {
+        from {
+          border-radius: 50%;
+          filter: grayscale(1) blur(4px);
+          transform: scale(0.85) rotate(-8deg);
+        }
+        to {
+          border-radius: 18px;
+          filter: grayscale(0) blur(0);
+          transform: scale(1) rotate(0);
+        }
+      }
+
+      /* ===========================================================
+         D. フィルタ遊び（hue-rotate / contrast / sepia）
+         =========================================================== */
+      .filter .avatar {
+        animation: filt linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 100%;
+      }
+      @keyframes filt {
+        0% { filter: sepia(1) hue-rotate(0deg) saturate(2); }
+        50% { filter: sepia(0) hue-rotate(180deg) saturate(3) contrast(1.2); }
+        100% { filter: sepia(0) hue-rotate(360deg) saturate(1); }
+      }
+
+      /* ===========================================================
+         E. 見せ場：sticky で固定したまま全部盛りモーフ
+         tall なセクションに view-timeline を命名 → 中の sticky 画像が
+         その進捗（contain 区間 = 固定されてる間）でアニメする。
+         =========================================================== */
+      .pin-stage {
+        position: relative;
+        height: 360vh;
+        view-timeline-name: --pin;
+        view-timeline-axis: block;
+      }
+      .pin-sticky {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 22px;
+        text-align: center;
+      }
+      .pin-sticky .avatar {
+        width: min(60vw, 360px);
+        animation: pin-morph linear both;
+        animation-timeline: --pin;
+        animation-range: contain 0% contain 100%;
+      }
+      @keyframes pin-morph {
+        0% {
+          transform: scale(0.5) rotate(0deg);
+          border-radius: 50%;
+          filter: grayscale(1) blur(6px);
+        }
+        25% {
+          transform: scale(1) rotate(0deg);
+          border-radius: 50%;
+          filter: grayscale(0) blur(0);
+        }
+        50% {
+          transform: scale(1.18) rotate(180deg);
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+          filter: hue-rotate(90deg) saturate(1.6);
+        }
+        75% {
+          transform: scale(1) rotate(360deg);
+          border-radius: 16px;
+          filter: hue-rotate(260deg);
+        }
+        100% {
+          transform: scale(0.9) rotate(360deg);
+          border-radius: 50%;
+          filter: grayscale(0);
+        }
+      }
+      .pin-caption {
+        color: var(--muted);
+        font-size: 14px;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      }
+
+      .outro {
+        min-height: 60vh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 0 24px;
+        gap: 14px;
+      }
+      .outro a {
+        color: var(--accent);
+      }
+
+      /* 未対応フォールバック：素のアバターを普通に表示 */
+      @supports not (animation-timeline: view()) {
+        .spin .avatar,
+        .pop .avatar,
+        .morph .avatar,
+        .filter .avatar,
+        .pin-sticky .avatar {
+          animation: none;
+          transform: none;
+          filter: none;
+          opacity: 1;
+          border-radius: 50%;
+        }
+        .pin-stage {
+          height: auto;
+        }
+        .pin-sticky {
+          height: auto;
+          padding: 20vh 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../">← 一覧へ</a>
+
+    <!-- ヒーロー -->
+    <section class="stage hero">
+      <div class="num">003</div>
+      <img
+        class="avatar"
+        src="https://avatars.githubusercontent.com/u/28728602?size=480"
+        alt="GitHub avatar"
+        width="280"
+        height="280"
+      />
+      <h1>画像にいろんなアニメ</h1>
+      <p>1 枚の <code>&lt;img&gt;</code> をスクロールで回したり伸ばしたり。下に進んでな。</p>
+      <div class="scroll-hint">↓ スクロール</div>
+    </section>
+
+    <!-- A. 回転 -->
+    <section class="stage spin">
+      <span class="label">view() ／ rotate 360°</span>
+      <img
+        class="avatar"
+        src="https://avatars.githubusercontent.com/u/28728602?size=480"
+        alt="rotating avatar"
+        width="280"
+        height="280"
+      />
+      <h2>くるっと回転</h2>
+      <p>区画を横切る進捗（entry → exit）に合わせて 1 回転。スクロールを止めれば回転も止まる。</p>
+    </section>
+
+    <!-- B. 拡大 -->
+    <section class="stage pop">
+      <span class="label">view() ／ scale</span>
+      <img
+        class="avatar"
+        src="https://avatars.githubusercontent.com/u/28728602?size=480"
+        alt="scaling avatar"
+        width="280"
+        height="280"
+      />
+      <h2>ぐぐっと拡大</h2>
+      <p>画面中央で最大、上下に外れると縮む。キーフレームの中間（50%）がピークやで。</p>
+    </section>
+
+    <!-- C. モーフ -->
+    <section class="stage morph">
+      <span class="label">view() ／ border-radius + filter</span>
+      <img
+        class="avatar"
+        src="https://avatars.githubusercontent.com/u/28728602?size=480"
+        alt="morphing avatar"
+        width="280"
+        height="280"
+      />
+      <h2>丸から角丸へモーフ</h2>
+      <p>形（border-radius）とグレースケール＋ブラーを同時に補間。白黒からカラーに戻る演出。</p>
+    </section>
+
+    <!-- D. フィルタ -->
+    <section class="stage filter">
+      <span class="label">view() ／ hue-rotate</span>
+      <img
+        class="avatar"
+        src="https://avatars.githubusercontent.com/u/28728602?size=480"
+        alt="filtered avatar"
+        width="280"
+        height="280"
+      />
+      <h2>フィルタで色変化</h2>
+      <p>色相をぐるっと一周。<code>filter</code> 系もキーフレームで普通に動かせるんや。</p>
+    </section>
+
+    <!-- E. 見せ場：sticky 固定の全部盛り -->
+    <section class="pin-stage">
+      <div class="pin-sticky">
+        <span class="label">view-timeline ／ sticky 固定</span>
+        <img
+          class="avatar"
+          src="https://avatars.githubusercontent.com/u/28728602?size=480"
+          alt="pinned morphing avatar"
+          width="360"
+          height="360"
+        />
+        <p class="pin-caption">スクロールし続けると、固定されたまま 5 段階に変身していくで</p>
+      </div>
+    </section>
+
+    <section class="outro">
+      <h2>おしまい 🎉</h2>
+      <p>全部 CSS だけ。スクロールイベントの JS は 1 行も書いてへんで。</p>
+      <p><a href="../../">← 一覧へ戻る</a></p>
+    </section>
+  </body>
+</html>

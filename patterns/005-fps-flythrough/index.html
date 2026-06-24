@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>005 FPS フライスルー — CSS 3D × Scroll-Driven</title>
+    <style>
+      :root {
+        --cyan: #2de2ff;
+        --magenta: #ff2bd6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: var(--magenta) transparent;
+      }
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .back {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 60;
+        text-decoration: none;
+        color: #fff;
+        background: rgba(10, 10, 20, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 43, 214, 0.5);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .back:hover {
+        border-color: var(--cyan);
+      }
+
+      /* ===========================================================
+         全体構造
+         - .viewport : 画面いっぱいに固定。perspective でカメラを作る
+         - .scroll-track : 縦に長いだけのダミー。これでページが
+           スクロール可能になり scroll(root) の進捗が生まれる
+         - .world : preserve-3d。scroll に連動して +Z 方向へ前進
+           → 正面の奥に並んだアバター立方体が、近づくほど大きくなる
+         暗闇を進むイメージ。図形はアバター立方体だけ。
+         =========================================================== */
+      .viewport {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        perspective: 760px;
+        /* 視点（=歩いてる高さ）を少しだけ下げる。Y を大きくすると消失点が下がり、
+           立体が画面のやや下に来る＝低い位置を歩いてる見え方になる。 */
+        perspective-origin: 50% 53%;
+        background:
+          radial-gradient(50% 40% at 50% 53%, rgba(60, 40, 110, 0.3), transparent 70%),
+          radial-gradient(130% 130% at 50% 53%, #0a0913 0%, #050509 55%, #000 100%);
+      }
+
+      /* 奥行き用の星屑（スクロールでゆっくり流れる） */
+      .stars {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-image:
+          radial-gradient(1px 1px at 25% 30%, rgba(255, 255, 255, 0.85), transparent),
+          radial-gradient(1px 1px at 70% 65%, rgba(255, 255, 255, 0.6), transparent),
+          radial-gradient(1.5px 1.5px at 45% 80%, rgba(180, 205, 255, 0.7), transparent),
+          radial-gradient(1px 1px at 85% 20%, rgba(255, 255, 255, 0.5), transparent),
+          radial-gradient(1px 1px at 12% 70%, rgba(255, 220, 255, 0.6), transparent);
+        background-size: 200px 200px, 260px 260px, 320px 320px, 180px 180px, 240px 240px;
+        animation: drift linear both;
+        animation-timeline: scroll(root);
+      }
+      @keyframes drift {
+        from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+        to { background-position: 0 -260px, 0 -440px, 0 -700px, 0 -180px, 0 -520px; }
+      }
+
+      .stage {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        z-index: 1;
+      }
+      .world {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        animation: fly linear both;
+        animation-timeline: scroll(root);
+      }
+      /* スクロール 0→100% で前方へ約 8200px 前進。
+         正面のアバター立方体が順番に目の前まで来て大きくなる。 */
+      @keyframes fly {
+        from { transform: translateZ(0); }
+        to { transform: translateZ(8200px); }
+      }
+
+      /* 立方体の配置ラッパー（--x/--y/--z で位置、--s でサイズ、--edge で色） */
+      .obj {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--z) * 1px));
+        transform-style: preserve-3d;
+      }
+      /* 立方体自体はゆっくり回転（回転＋接近で立体感） */
+      .spin {
+        transform-style: preserve-3d;
+        animation: spin-a 20s linear infinite;
+      }
+      .spin.b { animation: spin-b 26s linear infinite; }
+      .spin.c { animation: spin-c 16s linear infinite; }
+      @keyframes spin-a {
+        from { transform: rotateX(-12deg) rotateY(0); }
+        to { transform: rotateX(-12deg) rotateY(360deg); }
+      }
+      @keyframes spin-b {
+        from { transform: rotateY(0) rotateX(0); }
+        to { transform: rotateY(360deg) rotateX(360deg); }
+      }
+      @keyframes spin-c {
+        from { transform: rotateX(12deg) rotateY(360deg); }
+        to { transform: rotateX(12deg) rotateY(0); }
+      }
+
+      /* --- アバター立方体（6 面に daitasu の画像） --- */
+      .cube {
+        position: relative;
+        width: var(--s);
+        height: var(--s);
+        transform-style: preserve-3d;
+      }
+      .cube > i {
+        position: absolute;
+        inset: 0;
+        background: url("https://avatars.githubusercontent.com/u/28728602?size=480") center / cover;
+        border: 2px solid var(--edge);
+        box-shadow:
+          inset 0 0 0 2px color-mix(in srgb, var(--edge) 65%, transparent),
+          inset 0 0 36px color-mix(in srgb, var(--edge) 22%, transparent),
+          0 0 28px color-mix(in srgb, var(--edge) 50%, transparent);
+      }
+      .cube > i:nth-child(1) { transform: translateZ(calc(var(--s) / 2)); }
+      .cube > i:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+      .cube > i:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+      .cube > i:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+      .cube > i:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+      .cube > i:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+
+      /* 画面端を締めるビネット */
+      .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 3;
+        background: radial-gradient(120% 120% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.92) 100%);
+      }
+
+      /* HUD：クロスヘア＋タイトル＋スクロール促し */
+      .hud {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .crosshair {
+        position: absolute;
+        left: 50%;
+        top: 53%;
+        width: 22px;
+        height: 22px;
+        transform: translate(-50%, -50%);
+        opacity: 0.55;
+      }
+      .crosshair::before,
+      .crosshair::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 6px var(--cyan);
+      }
+      .crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+      .crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
+
+      .title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 8%;
+        text-align: center;
+      }
+      .title .num {
+        color: var(--cyan);
+        letter-spacing: 0.3em;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .title h1 {
+        margin: 6px 0 4px;
+        font-size: clamp(26px, 6vw, 54px);
+        letter-spacing: 0.04em;
+        text-shadow: 0 0 18px rgba(255, 43, 214, 0.7), 0 0 4px #fff;
+      }
+      .title .hint {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        animation: hint-fade linear both;
+        animation-timeline: scroll(root);
+        animation-range: 0% 10%;
+      }
+      @keyframes hint-fade {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+
+      /* 放射状のスピードライン（前進感ブースト） */
+      .speed {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+        background:
+          repeating-radial-gradient(
+            circle at 50% 53%,
+            transparent 0 70px,
+            rgba(255, 255, 255, 0.03) 70px 71px
+          );
+      }
+
+      /* 未対応ブラウザ向けフォールバック */
+      @supports not (animation-timeline: scroll()) {
+        .nofallback { display: none; }
+        .fallback-note { display: grid; }
+      }
+      .fallback-note {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        place-content: center;
+        text-align: center;
+        padding: 24px;
+        background: #0a0913;
+        color: #fff;
+        gap: 10px;
+      }
+      .fallback-note a { color: var(--cyan); }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../">← 一覧へ</a>
+
+    <div class="viewport">
+      <div class="stars"></div>
+
+      <div class="stage">
+        <div class="world">
+          <!-- アバター立方体を 4 つ、正面（中央）の奥に z をずらして配置。
+               スクロール前進で手前から順に大きくなって迫ってくる。 -->
+          <div class="obj" style="--x:-150;--y:-40;--z:-1500;--s:240px;--edge:#2de2ff;">
+            <div class="spin a"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+          <div class="obj" style="--x:170;--y:70;--z:-3300;--s:260px;--edge:#ff2bd6;">
+            <div class="spin b"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+          <div class="obj" style="--x:-120;--y:95;--z:-5100;--s:260px;--edge:#7cff6b;">
+            <div class="spin c"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+          <div class="obj" style="--x:140;--y:-90;--z:-6900;--s:280px;--edge:#ffb46b;">
+            <div class="spin a"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="speed"></div>
+      <div class="vignette"></div>
+
+      <div class="hud">
+        <div class="crosshair"></div>
+        <div class="title">
+          <div class="num">005</div>
+          <div class="hint">▼ スクロールで前進 ▼</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- スクロール量を生むためのダミー。高いほど飛行距離が長い -->
+    <div class="scroll-track nofallback" style="height: 600vh"></div>
+
+    <div class="fallback-note">
+      <div style="font-size: 22px">✈️ Scroll-Driven Animations 未対応</div>
+      <p>このブラウザでは前進アニメが動かへん。Chrome / Edge 115+、Safari 26+ で見てな。</p>
+      <a href="../../">← 一覧へ戻る</a>
+    </div>
+  </body>
+</html>

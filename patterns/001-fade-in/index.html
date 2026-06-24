@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>001 ふわっと出現 — CSS Scroll-Driven Animations</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --bg-soft: #141823;
+        --line: #232838;
+        --text: #e7ebf3;
+        --muted: #97a0b5;
+        --accent: #7c8cff;
+        --accent2: #5ce1c4;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1000px 600px at 90% -10%, rgba(124, 140, 255, 0.16), transparent 60%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, -apple-system, sans-serif;
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---- 共通：戻るリンク & ヘッダー ---- */
+      .back {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 10;
+        text-decoration: none;
+        color: var(--text);
+        background: rgba(20, 24, 35, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .back:hover {
+        border-color: var(--accent);
+      }
+      .hero {
+        min-height: 92vh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 0 24px;
+      }
+      .hero .num {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        font-size: 14px;
+      }
+      .hero h1 {
+        font-size: clamp(32px, 7vw, 64px);
+        margin: 10px 0 14px;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        color: var(--muted);
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      .scroll-hint {
+        margin-top: 44px;
+        color: var(--muted);
+        font-size: 13px;
+        animation: bob 1.6s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(8px); }
+      }
+
+      .container {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 0 24px 24vh;
+      }
+      .section-label {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        margin: 12vh 0 4vh;
+      }
+
+      /* ===========================================================
+         本体：スクロールで出現するカード
+         animation を「タイムライン」で駆動するのがキモ。
+         - animation-timeline: view()  → 要素自身がビューポートを
+           横切る進捗（0〜100%）でアニメが進む
+         - animation-range            → どの区間でアニメさせるか
+         shorthand の `animation` は animation-timeline を auto に
+         戻してしまうので、timeline / range は必ず後に書く。
+         =========================================================== */
+      .card {
+        background: linear-gradient(180deg, var(--bg-soft), rgba(20, 24, 35, 0.35));
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 30px 32px;
+        margin-bottom: 22px;
+
+        animation: reveal linear both;
+        animation-timeline: view();
+        /* 要素が下から入り始め（entry 0%）〜 4割ほど見えた（cover 40%）で完了 */
+        animation-range: entry 0% cover 40%;
+      }
+      @keyframes reveal {
+        from {
+          opacity: 0;
+          transform: translateY(60px) scale(0.96);
+          filter: blur(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      /* 左右から流し込むバリエーション（range も変えてある） */
+      .card.from-left {
+        animation-name: reveal-left;
+        animation-range: entry 10% cover 35%;
+      }
+      .card.from-right {
+        animation-name: reveal-right;
+        animation-range: entry 10% cover 35%;
+      }
+      @keyframes reveal-left {
+        from { opacity: 0; transform: translateX(-80px) rotate(-3deg); }
+        to { opacity: 1; transform: translateX(0) rotate(0); }
+      }
+      @keyframes reveal-right {
+        from { opacity: 0; transform: translateX(80px) rotate(3deg); }
+        to { opacity: 1; transform: translateX(0) rotate(0); }
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .card code {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 13px;
+        color: var(--accent2);
+        background: rgba(92, 225, 196, 0.08);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+
+      /* 未対応ブラウザ向けフォールバック：そのまま表示 */
+      @supports not (animation-timeline: view()) {
+        .card {
+          animation: none;
+          opacity: 1;
+          transform: none;
+          filter: none;
+        }
+        .fallback-note {
+          display: block;
+        }
+      }
+      .fallback-note {
+        display: none;
+        text-align: center;
+        color: #ffb86b;
+        font-size: 13px;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../">← 一覧へ</a>
+
+    <header class="hero">
+      <div>
+        <div class="num">001</div>
+        <h1>ふわっと出現</h1>
+        <p>スクロールして下のカードがビューポートに入ると、フェード＋スライド＋ブラー解除で現れるで。</p>
+        <div class="scroll-hint">↓ スクロール</div>
+      </div>
+    </header>
+
+    <p class="section-label">animation-timeline: view()</p>
+
+    <div class="container">
+      <div class="card">
+        <h3>下からフェードイン</h3>
+        <p><code>animation-range: entry 0% cover 40%</code>。要素が入り始めてから 4 割見えるまでで完成。</p>
+      </div>
+      <div class="card from-left">
+        <h3>左からスライド</h3>
+        <p>同じ仕組みで <code>translateX</code> と <code>rotate</code> を変えるだけ。X 方向の動き。</p>
+      </div>
+      <div class="card from-right">
+        <h3>右からスライド</h3>
+        <p>進捗に応じて回転も戻る。<code>view()</code> は要素ごとに進捗を持つのがミソ。</p>
+      </div>
+      <div class="card">
+        <h3>もういっちょ下から</h3>
+        <p>各カードが独立したタイムラインを持つから、それぞれ自分の位置で発火するで。</p>
+      </div>
+      <div class="card from-left">
+        <h3>左から</h3>
+        <p>JS のスクロールイベント監視は一切なし。全部 CSS の宣言だけで動いとる。</p>
+      </div>
+      <div class="card from-right">
+        <h3>右から</h3>
+        <p>メインスレッドを使わへんから、ガタつきにくくてスムーズなのが利点や。</p>
+      </div>
+
+      <p class="fallback-note">
+        ※ このブラウザは Scroll-Driven Animations 未対応のため、アニメなしで表示してます。
+      </p>
+    </div>
+  </body>
+</html>

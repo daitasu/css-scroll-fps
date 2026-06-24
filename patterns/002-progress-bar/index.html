@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>002 固定プログレスバー — CSS Scroll-Driven Animations</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --bg-soft: #141823;
+        --line: #232838;
+        --text: #e7ebf3;
+        --muted: #97a0b5;
+        --accent: #7c8cff;
+        --accent2: #5ce1c4;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1000px 600px at 10% -10%, rgba(92, 225, 196, 0.12), transparent 60%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          "Hiragino Sans", "Hiragino Kaku Gothic ProN", system-ui, -apple-system, sans-serif;
+        line-height: 1.9;
+        -webkit-font-smoothing: antialiased;
+      }
+      .back {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 10;
+        text-decoration: none;
+        color: var(--text);
+        background: rgba(20, 24, 35, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .back:hover {
+        border-color: var(--accent);
+      }
+
+      /* ===========================================================
+         ① 上部固定プログレスバー
+         scroll() = 直近のスクロールコンテナ（ここでは root=ページ）
+         の縦スクロール進捗 0〜100% をタイムラインにする。
+         transform: scaleX を 0→1 に動かすだけで伸びるバーになる。
+         scaleX はレイアウトを起こさず GPU 合成で動くので軽い。
+         =========================================================== */
+      .progress {
+        position: fixed;
+        inset: 0 0 auto 0; /* top:0; left:0; right:0 */
+        height: 7px;
+        z-index: 20;
+        transform-origin: 0 50%;
+        transform: scaleX(0);
+        background: linear-gradient(90deg, var(--accent2), var(--accent), #c47cff);
+        box-shadow: 0 0 14px rgba(124, 140, 255, 0.7);
+
+        animation: grow-x linear both;
+        animation-timeline: scroll(root); /* ルート（ページ全体）の縦スクロール */
+      }
+      @keyframes grow-x {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+      }
+
+      /* ===========================================================
+         ② おまけ：右下の円形インジケーター
+         conic-gradient の角度を CSS 変数 --p（0→1）で動かす。
+         @property で --p を <number> 登録するとアニメ補間できる。
+         =========================================================== */
+      @property --p {
+        syntax: "<number>";
+        inherits: false;
+        initial-value: 0;
+      }
+      .ring {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        z-index: 20;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: grid;
+        place-content: center;
+        --p: 0;
+        background:
+          radial-gradient(closest-side, var(--bg) 70%, transparent 71%),
+          conic-gradient(var(--accent) calc(var(--p) * 360deg), rgba(255, 255, 255, 0.08) 0);
+
+        animation: fill-ring linear both;
+        animation-timeline: scroll(root);
+      }
+      @keyframes fill-ring {
+        from { --p: 0; }
+        to { --p: 1; }
+      }
+      .ring span {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      }
+
+      /* ---- 読みもの本体 ---- */
+      .hero {
+        min-height: 90vh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 0 24px;
+      }
+      .hero .num {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        font-size: 14px;
+      }
+      .hero h1 {
+        font-size: clamp(32px, 7vw, 60px);
+        margin: 10px 0 14px;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        color: var(--muted);
+        max-width: 540px;
+        margin: 0 auto;
+      }
+      article {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 24px 30vh;
+      }
+      article h2 {
+        margin: 16vh 0 12px;
+        font-size: 26px;
+        letter-spacing: -0.01em;
+      }
+      article h2:first-child {
+        margin-top: 6vh;
+      }
+      article p {
+        color: #c6cde0;
+        margin: 0 0 20px;
+      }
+      article code {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 13px;
+        color: var(--accent2);
+        background: rgba(92, 225, 196, 0.08);
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+
+      /* 未対応フォールバック：バーは満タン固定にしとく（壊れない程度に） */
+      @supports not (animation-timeline: scroll()) {
+        .progress {
+          animation: none;
+          transform: scaleX(1);
+          opacity: 0.35;
+        }
+        .ring {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="../../">← 一覧へ</a>
+
+    <!-- ① 上部のプログレスバー -->
+    <div class="progress" role="progressbar" aria-label="読み進み"></div>
+
+    <!-- ② 右下の円形インジケーター -->
+    <div class="ring"><span>%</span></div>
+
+    <header class="hero">
+      <div>
+        <div class="num">002</div>
+        <h1>固定プログレスバー</h1>
+        <p>上のバーと右下のリングが、ページのスクロール量に合わせて伸びていくで。下まで読んでみてな。</p>
+      </div>
+    </header>
+
+    <article>
+      <h2>仕組み</h2>
+      <p>
+        ポイントはたった 2 行。<code>animation-timeline: scroll(root)</code> でページ全体のスクロール
+        進捗をアニメの「時間軸」に差し替えて、<code>@keyframes</code> で <code>scaleX(0)</code> →
+        <code>scaleX(1)</code> を補間するだけや。
+      </p>
+
+      <h2>なんで軽いん？</h2>
+      <p>
+        従来は <code>scroll</code> イベントを JS で拾って毎フレーム幅を計算してた。これはメイン
+        スレッドで走るからスクロールがカクつく原因になりがち。Scroll-Driven Animations はブラウザの
+        コンポジタ側で処理されるから、なめらかで省電力やねん。
+      </p>
+
+      <h2>scroll() の引数</h2>
+      <p>
+        <code>scroll()</code> は対象スクローラと軸を選べる。<code>scroll(root)</code> はページ全体、
+        <code>scroll(nearest block)</code> は直近の縦スクロール要素、みたいに指定できる。今回は
+        ページ全体の縦スクロールを見とる。
+      </p>
+
+      <h2>scaleX を使う理由</h2>
+      <p>
+        幅（<code>width</code>）を動かすとレイアウト再計算が走る。<code>transform: scaleX</code> なら
+        合成だけで済むので、これも軽さに効いとる。<code>transform-origin</code> を左端にして左から
+        伸びるようにしてるで。
+      </p>
+
+      <h2>円形リングのほう</h2>
+      <p>
+        右下のリングは <code>conic-gradient</code> の角度を <code>@property</code> で登録した
+        <code>--p</code>（0→1）で動かしてる。カスタムプロパティに型を付けると、こうやって
+        グラデーションの数値もアニメ補間できるようになるんや。
+      </p>
+
+      <h2>もうちょいスクロール</h2>
+      <p>バーが満タンに近づいてきたはず。最後まで行くと 100% になるで。</p>
+      <p>このへんはバーの動きを見てもらうためのダミーテキストや。読まんでええで（笑）。</p>
+      <p>でも仕組みはシンプルやろ？ JS ゼロでこれが書けるのがほんま気持ちええ。</p>
+
+      <h2>到達！</h2>
+      <p>ここまで来たらバーもリングもほぼ 100%。お疲れさん、daitasu。</p>
+    </article>
+  </body>
+</html>
