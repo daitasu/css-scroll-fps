@@ -56,12 +56,7 @@
         inset: 0;
         overflow: hidden;
         perspective: 760px;
-        /* 視点（=歩いてる高さ）を少しだけ下げる。Y を大きくすると消失点が下がり、
-           立体が画面のやや下に来る＝低い位置を歩いてる見え方になる。 */
         perspective-origin: 50% 53%;
-        background:
-          radial-gradient(50% 40% at 50% 53%, rgba(60, 40, 110, 0.3), transparent 70%),
-          radial-gradient(130% 130% at 50% 53%, #0a0913 0%, #050509 55%, #000 100%);
       }
 
       /* 奥行き用の星屑（スクロールでゆっくり流れる） */
@@ -156,15 +151,6 @@
       .cube > i:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
       .cube > i:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
 
-      /* 画面端を締めるビネット */
-      .vignette {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 3;
-        background: radial-gradient(120% 120% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.92) 100%);
-      }
-
       /* HUD：クロスヘア＋タイトル＋スクロール促し */
       .hud {
         position: absolute;
@@ -223,20 +209,6 @@
         to { opacity: 0; }
       }
 
-      /* 放射状のスピードライン（前進感ブースト） */
-      .speed {
-        position: absolute;
-        inset: 0;
-        z-index: 4;
-        pointer-events: none;
-        background:
-          repeating-radial-gradient(
-            circle at 50% 53%,
-            transparent 0 70px,
-            rgba(255, 255, 255, 0.03) 70px 71px
-          );
-      }
-
       /* 未対応ブラウザ向けフォールバック */
       @supports not (animation-timeline: scroll()) {
         .nofallback { display: none; }
@@ -270,20 +242,17 @@
           <div class="obj" style="--x:-150;--y:-40;--z:-1500;--s:240px;--edge:#2de2ff;">
             <div class="spin a"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           </div>
-          <div class="obj" style="--x:170;--y:70;--z:-3300;--s:260px;--edge:#ff2bd6;">
+          <div class="obj" style="--x:60;--y:-40;--z:-3300;--s:260px;--edge:#ff2bd6;">
             <div class="spin b"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           </div>
           <div class="obj" style="--x:-120;--y:95;--z:-5100;--s:260px;--edge:#7cff6b;">
             <div class="spin c"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           </div>
-          <div class="obj" style="--x:140;--y:-90;--z:-6900;--s:280px;--edge:#ffb46b;">
+          <div class="obj" style="--x:-140;--y:-90;--z:-6900;--s:280px;--edge:#ffb46b;">
             <div class="spin a"><div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
           </div>
         </div>
       </div>
-
-      <div class="speed"></div>
-      <div class="vignette"></div>
 
       <div class="hud">
         <div class="crosshair"></div>
@@ -295,7 +264,7 @@
     </div>
 
     <!-- スクロール量を生むためのダミー。高いほど飛行距離が長い -->
-    <div class="scroll-track nofallback" style="height: 600vh"></div>
+    <div class="scroll-track nofallback" style="height: 1000vh"></div>
 
     <div class="fallback-note">
       <div style="font-size: 22px">✈️ Scroll-Driven Animations 未対応</div>

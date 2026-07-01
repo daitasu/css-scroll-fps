@@ -109,13 +109,24 @@
         font-family: ui-monospace, "SF Mono", Menlo, monospace;
       }
 
-      /* ---- 読みもの本体 ---- */
       .hero {
         min-height: 90vh;
         display: grid;
         place-content: center;
+        justify-items: center;
         text-align: center;
         padding: 0 24px;
+        gap: 36px;
+      }
+      .cue {
+        margin: 0;
+        color: var(--muted);
+        font-size: 22px;
+        animation: bob 1.6s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(8px); }
       }
       .hero .num {
         color: var(--accent);
@@ -123,40 +134,18 @@
         letter-spacing: 0.2em;
         font-size: 14px;
       }
-      .hero h1 {
-        font-size: clamp(32px, 7vw, 60px);
-        margin: 10px 0 14px;
-        letter-spacing: -0.02em;
-      }
-      .hero p {
-        color: var(--muted);
-        max-width: 540px;
-        margin: 0 auto;
-      }
-      article {
+      /* スクロール量を生むためのニュートラルなセクション（説明文は置かない） */
+      .filler {
         max-width: 680px;
         margin: 0 auto;
         padding: 0 24px 30vh;
       }
-      article h2 {
-        margin: 16vh 0 12px;
-        font-size: 26px;
-        letter-spacing: -0.01em;
-      }
-      article h2:first-child {
-        margin-top: 6vh;
-      }
-      article p {
-        color: #c6cde0;
-        margin: 0 0 20px;
-      }
-      article code {
-        font-family: ui-monospace, "SF Mono", Menlo, monospace;
-        font-size: 13px;
-        color: var(--accent2);
-        background: rgba(92, 225, 196, 0.08);
-        border-radius: 6px;
-        padding: 1px 6px;
+      .filler section {
+        min-height: 80vh;
+        display: grid;
+        place-content: center;
+        font: 700 64px/1 ui-monospace, "SF Mono", Menlo, monospace;
+        color: rgba(151, 160, 181, 0.16);
       }
 
       /* 未対応フォールバック：バーは満タン固定にしとく（壊れない程度に） */
@@ -182,56 +171,17 @@
     <div class="ring"><span>%</span></div>
 
     <header class="hero">
-      <div>
-        <div class="num">002</div>
-        <h1>固定プログレスバー</h1>
-        <p>上のバーと右下のリングが、ページのスクロール量に合わせて伸びていくで。下まで読んでみてな。</p>
-      </div>
+      <div class="num">002</div>
+      <p class="cue">↓</p>
     </header>
 
-    <article>
-      <h2>仕組み</h2>
-      <p>
-        ポイントはたった 2 行。<code>animation-timeline: scroll(root)</code> でページ全体のスクロール
-        進捗をアニメの「時間軸」に差し替えて、<code>@keyframes</code> で <code>scaleX(0)</code> →
-        <code>scaleX(1)</code> を補間するだけや。
-      </p>
-
-      <h2>なんで軽いん？</h2>
-      <p>
-        従来は <code>scroll</code> イベントを JS で拾って毎フレーム幅を計算してた。これはメイン
-        スレッドで走るからスクロールがカクつく原因になりがち。Scroll-Driven Animations はブラウザの
-        コンポジタ側で処理されるから、なめらかで省電力やねん。
-      </p>
-
-      <h2>scroll() の引数</h2>
-      <p>
-        <code>scroll()</code> は対象スクローラと軸を選べる。<code>scroll(root)</code> はページ全体、
-        <code>scroll(nearest block)</code> は直近の縦スクロール要素、みたいに指定できる。今回は
-        ページ全体の縦スクロールを見とる。
-      </p>
-
-      <h2>scaleX を使う理由</h2>
-      <p>
-        幅（<code>width</code>）を動かすとレイアウト再計算が走る。<code>transform: scaleX</code> なら
-        合成だけで済むので、これも軽さに効いとる。<code>transform-origin</code> を左端にして左から
-        伸びるようにしてるで。
-      </p>
-
-      <h2>円形リングのほう</h2>
-      <p>
-        右下のリングは <code>conic-gradient</code> の角度を <code>@property</code> で登録した
-        <code>--p</code>（0→1）で動かしてる。カスタムプロパティに型を付けると、こうやって
-        グラデーションの数値もアニメ補間できるようになるんや。
-      </p>
-
-      <h2>もうちょいスクロール</h2>
-      <p>バーが満タンに近づいてきたはず。最後まで行くと 100% になるで。</p>
-      <p>このへんはバーの動きを見てもらうためのダミーテキストや。読まんでええで（笑）。</p>
-      <p>でも仕組みはシンプルやろ？ JS ゼロでこれが書けるのがほんま気持ちええ。</p>
-
-      <h2>到達！</h2>
-      <p>ここまで来たらバーもリングもほぼ 100%。お疲れさん、daitasu。</p>
-    </article>
+    <!-- スクロール量を生むためのダミーセクション -->
+    <div class="filler">
+      <section>01</section>
+      <section>02</section>
+      <section>03</section>
+      <section>04</section>
+      <section>05</section>
+    </div>
   </body>
 </html>

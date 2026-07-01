@@ -29,7 +29,6 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      /* ---- 共通：戻るリンク & ヘッダー ---- */
       .back {
         position: fixed;
         top: 18px;
@@ -51,29 +50,20 @@
         min-height: 92vh;
         display: grid;
         place-content: center;
+        justify-items: center;
         text-align: center;
         padding: 0 24px;
+        gap: 40px;
       }
-      .hero .num {
+      .num {
         color: var(--accent);
         font-weight: 700;
         letter-spacing: 0.2em;
         font-size: 14px;
       }
-      .hero h1 {
-        font-size: clamp(32px, 7vw, 64px);
-        margin: 10px 0 14px;
-        letter-spacing: -0.02em;
-      }
-      .hero p {
-        color: var(--muted);
-        max-width: 520px;
-        margin: 0 auto;
-      }
       .scroll-hint {
-        margin-top: 44px;
         color: var(--muted);
-        font-size: 13px;
+        font-size: 22px;
         animation: bob 1.6s ease-in-out infinite;
       }
       @keyframes bob {
@@ -83,15 +73,10 @@
 
       .container {
         max-width: 760px;
-        margin: 0 auto;
-        padding: 0 24px 24vh;
-      }
-      .section-label {
-        text-align: center;
-        color: var(--muted);
-        font-size: 13px;
-        font-family: ui-monospace, "SF Mono", Menlo, monospace;
-        margin: 12vh 0 4vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 200px 0;
       }
 
       /* ===========================================================
@@ -104,11 +89,16 @@
          戻してしまうので、timeline / range は必ず後に書く。
          =========================================================== */
       .card {
-        background: linear-gradient(180deg, var(--bg-soft), rgba(20, 24, 35, 0.35));
+        display: grid;
+        place-content: center;
+        min-height: 100px;
+        width: 100px;
+        margin-bottom: 30px;
+        /* background: linear-gradient(180deg, var(--bg-soft), rgba(20, 24, 35, 0.35)); */
         border: 1px solid var(--line);
         border-radius: 18px;
-        padding: 30px 32px;
-        margin-bottom: 22px;
+        font: 700 28px/1 ui-monospace, "SF Mono", Menlo, monospace;
+        color: var(--muted);
 
         animation: reveal linear both;
         animation-timeline: view();
@@ -146,23 +136,6 @@
         to { opacity: 1; transform: translateX(0) rotate(0); }
       }
 
-      .card h3 {
-        margin: 0 0 8px;
-        font-size: 20px;
-      }
-      .card p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .card code {
-        font-family: ui-monospace, "SF Mono", Menlo, monospace;
-        font-size: 13px;
-        color: var(--accent2);
-        background: rgba(92, 225, 196, 0.08);
-        border-radius: 6px;
-        padding: 1px 6px;
-      }
-
       /* 未対応ブラウザ向けフォールバック：そのまま表示 */
       @supports not (animation-timeline: view()) {
         .card {
@@ -171,16 +144,6 @@
           transform: none;
           filter: none;
         }
-        .fallback-note {
-          display: block;
-        }
-      }
-      .fallback-note {
-        display: none;
-        text-align: center;
-        color: #ffb86b;
-        font-size: 13px;
-        margin-top: 24px;
       }
     </style>
   </head>
@@ -188,45 +151,17 @@
     <a class="back" href="../../">← 一覧へ</a>
 
     <header class="hero">
-      <div>
-        <div class="num">001</div>
-        <h1>ふわっと出現</h1>
-        <p>スクロールして下のカードがビューポートに入ると、フェード＋スライド＋ブラー解除で現れるで。</p>
-        <div class="scroll-hint">↓ スクロール</div>
-      </div>
+      <div class="num">001</div>
+      <div class="scroll-hint">↓</div>
     </header>
 
-    <p class="section-label">animation-timeline: view()</p>
-
     <div class="container">
-      <div class="card">
-        <h3>下からフェードイン</h3>
-        <p><code>animation-range: entry 0% cover 40%</code>。要素が入り始めてから 4 割見えるまでで完成。</p>
-      </div>
-      <div class="card from-left">
-        <h3>左からスライド</h3>
-        <p>同じ仕組みで <code>translateX</code> と <code>rotate</code> を変えるだけ。X 方向の動き。</p>
-      </div>
-      <div class="card from-right">
-        <h3>右からスライド</h3>
-        <p>進捗に応じて回転も戻る。<code>view()</code> は要素ごとに進捗を持つのがミソ。</p>
-      </div>
-      <div class="card">
-        <h3>もういっちょ下から</h3>
-        <p>各カードが独立したタイムラインを持つから、それぞれ自分の位置で発火するで。</p>
-      </div>
-      <div class="card from-left">
-        <h3>左から</h3>
-        <p>JS のスクロールイベント監視は一切なし。全部 CSS の宣言だけで動いとる。</p>
-      </div>
-      <div class="card from-right">
-        <h3>右から</h3>
-        <p>メインスレッドを使わへんから、ガタつきにくくてスムーズなのが利点や。</p>
-      </div>
-
-      <p class="fallback-note">
-        ※ このブラウザは Scroll-Driven Animations 未対応のため、アニメなしで表示してます。
-      </p>
+      <div class="card">01</div>
+      <div class="card from-left">02</div>
+      <div class="card from-right">03</div>
+      <div class="card">04</div>
+      <div class="card from-left">05</div>
+      <div class="card from-right">06</div>
     </div>
   </body>
 </html>
